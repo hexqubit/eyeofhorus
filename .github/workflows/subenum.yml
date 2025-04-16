@@ -70,7 +70,7 @@ jobs:
       - name: Run Findomain
         run: |
           echo "Running findomain..."
-          findomain --quiet -t ${{ env.TARGET_DOMAIN }} -o subdomain_results/findomain.txt || echo "Findomain failed"
+          findomain --quiet -t ${{ env.TARGET_DOMAIN }} | tee subdomain_results/findomain.txt || echo "Findomain failed"
       
       - name: Combine and sort results
         run: |
