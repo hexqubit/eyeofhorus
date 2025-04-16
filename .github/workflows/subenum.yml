@@ -88,15 +88,15 @@ jobs:
 
       - name: http probe unique
         run: |
-          httpx -l unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o httpx_output_unique.txt
+          httpx -l subdomain_results/unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_unique.txt
           
       - name: http probe github
         run: |
-          httpx -l github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o httpx_output_github.txt
+          httpx -l subdomain_results/github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_github.txt
    
       - name: http probe passive
         run: |
-          httpx -l passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o httpx_output_passive.txt
+          httpx -l subdomain_results/passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_passive.txt
     
       - name: Upload results as artifacts
         uses: actions/upload-artifact@v4
