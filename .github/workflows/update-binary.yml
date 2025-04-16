@@ -40,6 +40,7 @@ jobs:
             "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
             "github.com/projectdiscovery/httpx/cmd/httpx@latest"
             "github.com/tomnomnom/assetfinder@latest"
+            "github.com/gwen001/github-subdomains@latest"
           )
           
           for package in "${GO_PACKAGES[@]}"; do
