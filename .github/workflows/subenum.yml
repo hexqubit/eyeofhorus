@@ -65,7 +65,7 @@ jobs:
       - name: Run Subfinder
         run: |
           echo "Running Subfinder..."
-          subfinder -d ${{ env.TARGET_DOMAIN }} -all -recursive -t 200 -silent -o subdomain_results/subfinder-recursive.txt || echo "Subfinder failed"
+          subfinder -d ${{ env.TARGET_DOMAIN }} -all -recursive -t 200 -silent -o subdomain_results/subfinder-rescursive.txt || echo "Subfinder failed"
           
       - name: Run Findomain
         run: |
