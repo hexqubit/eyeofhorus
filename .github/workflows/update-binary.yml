@@ -1,0 +1,84 @@
+name: Update Binaries
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 0 * * *'
+  # Allows manual triggering
+  workflow_dispatch:
+
+jobs:
+  update-binaries:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed for pushing changes
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          check-latest: true
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      
+      - name: Create bin directory if it doesn't exist
+        run: mkdir -p bin
+      
+      - name: Update Go binaries
+        run: |
+          # List of Go packages to install
+          GO_PACKAGES=(
+            "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
+            "github.com/projectdiscovery/httpx/cmd/httpx@latest"
+          )
+          
+          for package in "${GO_PACKAGES[@]}"; do
+            echo "Installing $package"
+            go install $package
+          done
+          
+          # Copy binaries from Go bin directory to repo bin directory
+          cp -v $(go env GOPATH)/bin/* ./bin/ || true
+      
+      - name: Update Cargo binaries
+        run: |
+          # List of Rust packages to install via cargo from GitHub
+          CARGO_PACKAGES=(
+            "findomain|https://github.com/Findomain/Findomain"
+            # Add more packages in "binary_name|github_url" format
+          )
+          
+          # Install from GitHub URLs and selectively copy only the binaries we need
+          for package_info in "${CARGO_PACKAGES[@]}"; do
+            IFS="|" read -r binary_name github_url <<< "$package_info"
+            echo "Installing $binary_name from $github_url"
+            cargo install --git $github_url
+            echo "Copying $binary_name to bin directory"
+            cp -v $HOME/.cargo/bin/$binary_name ./bin/ || echo "Failed to copy $binary_name"
+          done
+      
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "hexqubit"
+          git config --global user.email "hexqubit@users.noreply.github.com"
+          
+          git add bin/
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            # Format date as YYYY-MM-DD HH:MM:SS in UTC
+            current_date=$(date -u +"%Y-%m-%d %H:%M:%S")
+            git commit -m "Update binaries - $current_date"
+            git push
+          fi
