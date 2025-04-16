@@ -114,9 +114,9 @@ jobs:
           git config --global user.email "hexqubit@users.noreply.github.com"
           
           mkdir -p results/${{ env.TARGET_DOMAIN }}
-          cp -r subdomain_results/* results/${{ env.TARGET_DOMAIN }}/
+          cp -r subdomain_results/* subdomains/${{ env.TARGET_DOMAIN }}/
           
-          git add results/${{ env.TARGET_DOMAIN }}
+          git add subdomains/${{ env.TARGET_DOMAIN }}
           
           if git diff --staged --quiet; then
             echo "No changes to commit"
