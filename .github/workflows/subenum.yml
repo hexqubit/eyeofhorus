@@ -54,15 +54,15 @@ jobs:
           echo "Running subcat..."
           subcat -d ${{ env.TARGET_DOMAIN }} -o subdomain_results/subcat.txt || echo "Subcat failed"
     
-      - name: Run Assetfiner
+      - name: Run Assetfinder
         run: |
           echo "Running Assetfinder..."
-          assetfinder -subs-only $1 | tee assetfinder.txt | tee subdomain_results/assetfinder.txt || echo "Assetfinder failed"
+          assetfinder --subs-only ${{ env.TARGET_DOMAIN }} | tee subdomain_results/assetfinder.txt || echo "Assetfinder failed"
 
       - name: Run Subfinder
         run: |
           echo "Running Subfinder..."
-          subfinder -d ${{ env.TARGET_DOMAIN }} -all -recursive -t 200 -silent -o subdomain_results/subfinder-rescursive.txt || echo "Subfinder failed"
+          subfinder -d ${{ env.TARGET_DOMAIN }} -all -recursive -t 200 -silent -o subdomain_results/subfinder-recursive.txt || echo "Subfinder failed"
           
       - name: Run Findomain
         run: |
@@ -71,11 +71,12 @@ jobs:
       
       - name: Combine and sort results
         run: |
-          sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > subdomain_results/passive.txt
-          rm  subdomain_results/subcat.txt  subdomain_results/assetfinder.txt  subdomain_results/subfinder-rescursive.txt  subdomain_results/findomain.txt
+          cd subdomain_results
+          cat subcat.txt assetfinder.txt subfinder-recursive.txt findomain.txt | sort -u > passive.txt
+          echo "Total unique subdomains found: $(wc -l < passive.txt)"
       
       - name: Upload results as artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results/
