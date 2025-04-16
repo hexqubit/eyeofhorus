@@ -1,0 +1,102 @@
+name: Subdomain Enumeration
+
+on:
+  # Manual trigger with domain input
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: 'Target domain to scan'
+        required: true
+        default: 'example.com'
+
+jobs:
+  enumerate-subdomains:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
+      
+      - name: Setup Python for subcat
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install subcat
+        run: |
+          pip install pipx
+          pipx install subcat
+          echo "$(pipx environment --value PIPX_BIN_DIR)" >> $GITHUB_PATH
+      
+      - name: Verify tools availability
+        run: |
+          echo "Checking binary availability:"
+          which subfinder || echo "subfinder not found"
+          which assetfinder || echo "assetfinder not found"
+          which findomain || echo "findomain not found"
+          which subcat || echo "subcat not found"
+      
+      - name: Set target domain
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+          echo "Running enumeration against: ${{ env.TARGET_DOMAIN }}"
+      
+      - name: Create output directory
+        run: mkdir -p subdomain_results
+      
+      - name: Run subcat
+        run: |
+          echo "Running subcat..."
+          subcat -d ${{ env.TARGET_DOMAIN }} -o subdomain_results/subcat.txt || echo "Subcat failed"
+    
+      - name: Run Assetfiner
+        run: |
+          echo "Running Assetfinder..."
+          assetfinder -subs-only $1 | tee assetfinder.txt | tee subdomain_results/assetfinder.txt || echo "Assetfinder failed"
+
+      - name: Run Subfinder
+        run: |
+          echo "Running Subfinder..."
+          subfinder -d ${{ env.TARGET_DOMAIN }} -all -recursive -t 200 -silent -o subdomain_results/subfinder-rescursive.txt || echo "Subfinder failed"
+          
+      - name: Run Findomain
+        run: |
+          echo "Running findomain..."
+          findomain --quiet -t ${{ env.TARGET_DOMAIN }} -o subdomain_results/findomain.txt || echo "Findomain failed"
+      
+      - name: Combine and sort results
+        run: |
+          sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > subdomain_results/passive.txt
+          rm  subdomain_results/subcat.txt  subdomain_results/assetfinder.txt  subdomain_results/subfinder-rescursive.txt  subdomain_results/findomain.txt
+      
+      - name: Upload results as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results/
+          retention-days: 7
+      
+      - name: Commit results
+        run: |
+          # Format date as YYYY-MM-DD HH:MM:SS in UTC
+          timestamp=$(date -u +"%Y-%m-%d %H:%M:%S")
+          
+          git config --global user.name "hexqubit"
+          git config --global user.email "hexqubit@users.noreply.github.com"
+          
+          mkdir -p results/${{ env.TARGET_DOMAIN }}
+          cp -r subdomain_results/* results/${{ env.TARGET_DOMAIN }}/
+          
+          git add results/${{ env.TARGET_DOMAIN }}
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Subdomain enumeration results for ${{ env.TARGET_DOMAIN }} - $timestamp"
+            git push
+          fi
