@@ -7,11 +7,14 @@ on:
       domain:
         description: 'Target domain to scan'
         required: true
-        default: 'example.com'
+        default: 'siasindia.com'
 
 jobs:
   enumerate-subdomains:
     runs-on: ubuntu-latest
+    # Add explicit write permissions for contents
+    permissions:
+      contents: write
     
     steps:
       - name: Checkout repository
@@ -72,8 +75,7 @@ jobs:
       - name: Combine and sort results
         run: |
           cd subdomain_results
-          cat subcat.txt assetfinder.txt subfinder-recursive.txt findomain.txt | sort -u > passive.txt
-          echo "Total unique subdomains found: $(wc -l < passive.txt)"
+          sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > passive.txt
       
       - name: Upload results as artifacts
         uses: actions/upload-artifact@v4
