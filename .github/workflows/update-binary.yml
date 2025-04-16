@@ -39,6 +39,7 @@ jobs:
           GO_PACKAGES=(
             "github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
             "github.com/projectdiscovery/httpx/cmd/httpx@latest"
+            "github.com/tomnomnom/assetfinder@latest"
           )
           
           for package in "${GO_PACKAGES[@]}"; do
