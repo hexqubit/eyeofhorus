@@ -71,12 +71,33 @@ jobs:
         run: |
           echo "Running findomain..."
           findomain --quiet -t ${{ env.TARGET_DOMAIN }} | tee subdomain_results/findomain.txt || echo "Findomain failed"
+    
+      - name: Run GitHub Subdomains
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_SUBDOMAIN_TOKEN }}
+        run: |
+          echo "Running github-subdomains..."
+          github-subdomains -d ${{ env.TARGET_DOMAIN }} -t $GITHUB_TOKEN -o subdomain_results/github.txt || echo "GitHub subdomains failed"
       
       - name: Combine and sort results
         run: |
           cd subdomain_results
           sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > passive.txt
-      
+          rm assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt
+          grep -Fxvi -f passive.txt github.txt > unique_domains.txt
+
+      - name: http probe unique
+        run: |
+          httpx -l unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o httpx_output_unique.txt
+          
+      - name: http probe github
+        run: |
+          httpx -l github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o httpx_output_github.txt
+   
+      - name: http probe passive
+        run: |
+          httpx -l passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o httpx_output_passive.txt
+    
       - name: Upload results as artifacts
         uses: actions/upload-artifact@v4
         with:
