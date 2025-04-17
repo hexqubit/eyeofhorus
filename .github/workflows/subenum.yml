@@ -81,12 +81,29 @@ jobs:
       
       - name: Combine and sort results
         run: |
-          cd subdomain_results
-          ls
+          echo "File sizes:"
+          wc -l assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt github.txt || true
+    
+          # Create passive.txt with error handling
           sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > passive.txt
+    
+          # Remove original files
           rm assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt
-          grep -Fxvi -f passive.txt github.txt > unique_domains.txt
-
+    
+          # Make grep more robust by handling empty results
+          if [ -s passive.txt ] && [ -s github.txt ]; then
+            # Both files exist and have content
+            grep -Fxvi -f passive.txt github.txt > unique_domains.txt || touch unique_domains.txt
+          else
+            # At least one file is empty, create empty result
+            touch unique_domains.txt
+            echo "Warning: passive.txt or github.txt is empty"
+          fi
+    
+          # Verify the results
+          echo "Final file sizes:"
+          wc -l passive.txt github.txt unique_domains.txt || true
+      
       - name: http probe unique
         run: |
           httpx -l subdomain_results/unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_unique.txt
