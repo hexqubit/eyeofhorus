@@ -173,7 +173,6 @@ jobs:
             cd ..
           fi
       
-      
       - name: Upload screenshot results
         uses: actions/upload-artifact@v4
         with:
