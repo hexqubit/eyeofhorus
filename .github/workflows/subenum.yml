@@ -143,7 +143,7 @@ jobs:
             git commit -m "Subdomain enumeration results for ${{ env.TARGET_DOMAIN }} - $timestamp"
             git push
           fi
-          
+
   screenshot-subdomains:
     needs: enumerate-subdomains
     runs-on: ubuntu-latest
@@ -172,6 +172,7 @@ jobs:
       - name: Verify gowitness availability
         run: |
           which gowitness || echo "gowitness not found in PATH"
+          gowitness --version
       
       # Process httpx_output_unique.txt
       - name: Take screenshots - Unique Domains
@@ -179,56 +180,87 @@ jobs:
           if [ -f subdomain_results/httpx_output_unique.txt ]; then
             mkdir -p screenshots_unique
             cd screenshots_unique
-            cat ../subdomain_results/httpx_output_unique.txt | grep -v "FAILED" |  awk '{print $1}' > urls.txt
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path . --write-db
+            cat ../subdomain_results/httpx_output_unique.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
+            
+            # Debug - print URLs being processed
+            echo "Processing $(wc -l < urls.txt) URLs from unique domains"
+            
+            # Run gowitness with explicit path
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
+            
+            # Debug - verify screenshots were created
+            find . -type f -name "*.png" | wc -l
+            du -sh ./screenshots
+            ls -la ./screenshots
+            
             echo "Generated $(find . -name "*.png" | wc -l) screenshots for unique domains"
             cd ..
           else
             echo "File subdomain_results/httpx_output_unique.txt not found"
           fi
       
-      # Process httpx_output_github.txt
+      # Process httpx_output_github.txt - similar updates
       - name: Take screenshots - GitHub Domains
         run: |
           if [ -f subdomain_results/httpx_output_github.txt ]; then
             mkdir -p screenshots_github
             cd screenshots_github
-            cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" |  awk '{print $1}' > urls.txt
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path . --write-db
+            cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
+            
+            echo "Processing $(wc -l < urls.txt) URLs from GitHub domains"
+            
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
+            
+            find . -type f -name "*.png" | wc -l
+            du -sh ./screenshots
+            
             echo "Generated $(find . -name "*.png" | wc -l) screenshots for GitHub domains"
             cd ..
           else
             echo "File subdomain_results/httpx_output_github.txt not found"
           fi
       
-      # Process httpx_output_passive.txt
+      # Process httpx_output_passive.txt - similar updates
       - name: Take screenshots - Passive Domains
         run: |
           if [ -f subdomain_results/httpx_output_passive.txt ]; then
             mkdir -p screenshots_passive
             cd screenshots_passive
-            cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" |  awk '{print $1}' > urls.txt
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path . --write-db
+            cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
+            
+            echo "Processing $(wc -l < urls.txt) URLs from passive domains"
+            
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
+            
+            find . -type f -name "*.png" | wc -l
+            du -sh ./screenshots
+            
             echo "Generated $(find . -name "*.png" | wc -l) screenshots for passive domains"
             cd ..
           else
             echo "File subdomain_results/httpx_output_passive.txt not found"
           fi
       
+      # List all files before compressing
+      - name: Debug - List all files
+        run: |
+          echo "==== DIRECTORY STRUCTURE BEFORE COMPRESSION ===="
+          find screenshots_* -type f | sort
+      
       # Compress each screenshot directory separately including the SQLite database
       - name: Compress screenshots with databases
         run: |
           # Compress each directory separately if it exists and has content
           if [ -d screenshots_unique ] && [ "$(ls -A screenshots_unique)" ]; then
-            tar -czf screenshots_unique_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_unique/
+            tar -czvf screenshots_unique_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_unique/
           fi
           
           if [ -d screenshots_github ] && [ "$(ls -A screenshots_github)" ]; then
-            tar -czf screenshots_github_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_github/
+            tar -czvf screenshots_github_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_github/
           fi
           
           if [ -d screenshots_passive ] && [ "$(ls -A screenshots_passive)" ]; then
-            tar -czf screenshots_passive_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_passive/
+            tar -czvf screenshots_passive_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_passive/
           fi
       
       # Upload all screenshot archives as artifacts
