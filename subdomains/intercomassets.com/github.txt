@@ -1,10 +1,10 @@
-intercomassets.com
 static.intercomassets.com
-store.intercomassets.com
-marketing.intercomassets.com
+intercomassets.com
 blog.intercomassets.com
 blog-staging.intercomassets.com
 developer-home.intercomassets.com
+marketing.intercomassets.com
+store.intercomassets.com
 static.au.intercomassets.com
 au.intercomassets.com
 billing-admin.intercomassets.com
