@@ -149,7 +149,7 @@ jobs:
             mkdir -p screenshots_unique
             cd screenshots_unique
             cat ../subdomain_results/httpx_output_unique.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
       
@@ -159,7 +159,7 @@ jobs:
             mkdir -p screenshots_github
             cd screenshots_github
             cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
       
@@ -169,7 +169,7 @@ jobs:
             mkdir -p screenshots_passive
             cd screenshots_passive
             cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
       
