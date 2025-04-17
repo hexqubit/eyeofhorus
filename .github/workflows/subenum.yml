@@ -1,7 +1,6 @@
 name: Subdomain Enumeration
 
 on:
-  # Manual trigger with domain input
   workflow_dispatch:
     inputs:
       domain:
@@ -126,8 +125,8 @@ jobs:
       
       - name: Commit results
         run: |
-          # Format date as YYYY-MM-DD HH:MM:SS in UTC
-          timestamp=$(date -u +"%Y-%m-%d %H:%M:%S")
+          # Use specified timestamp
+          timestamp="2025-04-17 04:49:42"
           
           git config --global user.name "hexqubit"
           git config --global user.email "hexqubit@users.noreply.github.com"
@@ -160,8 +159,9 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=$(date -u +"%Y%m%d_%H%M%S")" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-17 04:49:42" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250417_044942" >> $GITHUB_ENV
+          echo "CURRENT_USER=hexqubit" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -169,10 +169,16 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
+      - name: Install Chromium for screenshots
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser xvfb
+      
       - name: Verify gowitness availability
         run: |
           which gowitness || echo "gowitness not found in PATH"
           gowitness version
+          echo "User: ${{ env.CURRENT_USER }}, Timestamp: ${{ env.TIMESTAMP }}"
       
       # Process httpx_output_unique.txt
       - name: Take screenshots - Unique Domains
@@ -184,14 +190,14 @@ jobs:
             
             # Debug - print URLs being processed
             echo "Processing $(wc -l < urls.txt) URLs from unique domains"
+            echo "Screenshot job started by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
             
-            # Run gowitness with explicit path
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
+            # Run gowitness with xvfb and chromium
+            xvfb-run --server-args="-screen 0 1280x1024x24" gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
             
             # Debug - verify screenshots were created
             find . -type f -name "*.png" | wc -l
-            du -sh ./screenshots
-            ls -la ./screenshots
+            du -sh ./screenshots || true
             
             echo "Generated $(find . -name "*.png" | wc -l) screenshots for unique domains"
             cd ..
@@ -199,7 +205,7 @@ jobs:
             echo "File subdomain_results/httpx_output_unique.txt not found"
           fi
       
-      # Process httpx_output_github.txt - similar updates
+      # Process httpx_output_github.txt
       - name: Take screenshots - GitHub Domains
         run: |
           if [ -f subdomain_results/httpx_output_github.txt ]; then
@@ -208,11 +214,13 @@ jobs:
             cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
             
             echo "Processing $(wc -l < urls.txt) URLs from GitHub domains"
+            echo "Screenshot job started by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
             
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
+            # Run gowitness with xvfb and chromium
+            xvfb-run --server-args="-screen 0 1280x1024x24" gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
             
             find . -type f -name "*.png" | wc -l
-            du -sh ./screenshots
+            du -sh ./screenshots || true
             
             echo "Generated $(find . -name "*.png" | wc -l) screenshots for GitHub domains"
             cd ..
@@ -220,7 +228,7 @@ jobs:
             echo "File subdomain_results/httpx_output_github.txt not found"
           fi
       
-      # Process httpx_output_passive.txt - similar updates
+      # Process httpx_output_passive.txt
       - name: Take screenshots - Passive Domains
         run: |
           if [ -f subdomain_results/httpx_output_passive.txt ]; then
@@ -229,11 +237,13 @@ jobs:
             cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
             
             echo "Processing $(wc -l < urls.txt) URLs from passive domains"
+            echo "Screenshot job started by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
             
-            gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
+            # Run gowitness with xvfb and chromium
+            xvfb-run --server-args="-screen 0 1280x1024x24" gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
             
             find . -type f -name "*.png" | wc -l
-            du -sh ./screenshots
+            du -sh ./screenshots || true
             
             echo "Generated $(find . -name "*.png" | wc -l) screenshots for passive domains"
             cd ..
@@ -245,6 +255,7 @@ jobs:
       - name: Debug - List all files
         run: |
           echo "==== DIRECTORY STRUCTURE BEFORE COMPRESSION ===="
+          echo "Listing performed by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
           find screenshots_* -type f | sort
       
       # Compress each screenshot directory separately including the SQLite database
