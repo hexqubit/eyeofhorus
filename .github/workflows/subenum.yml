@@ -124,3 +124,98 @@ jobs:
             git commit -m "Subdomain enumeration results for ${{ env.TARGET_DOMAIN }} - $timestamp"
             git push
           fi
+          
+  screenshot-subdomains:
+    needs: enumerate-subdomains
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
+      
+      - name: Set target domain and timestamp
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S")" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=$(date -u +"%Y%m%d_%H%M%S")" >> $GITHUB_ENV
+      
+      - name: Download subdomain results
+        uses: actions/download-artifact@v4
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results
+      
+      - name: Verify gowitness availability
+        run: |
+          which gowitness || echo "gowitness not found in PATH"
+      
+      # Process httpx_output_unique.txt
+      - name: Take screenshots - Unique Domains
+        run: |
+          if [ -f subdomain_results/httpx_output_unique.txt ]; then
+            mkdir -p screenshots_unique
+            cd screenshots_unique
+            cat ../subdomain_results/httpx_output_unique.txt | grep -v "FAILED" |  awk '{print $1}' > urls.txt
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path . --write-db
+            echo "Generated $(find . -name "*.png" | wc -l) screenshots for unique domains"
+            cd ..
+          else
+            echo "File subdomain_results/httpx_output_unique.txt not found"
+          fi
+      
+      # Process httpx_output_github.txt
+      - name: Take screenshots - GitHub Domains
+        run: |
+          if [ -f subdomain_results/httpx_output_github.txt ]; then
+            mkdir -p screenshots_github
+            cd screenshots_github
+            cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" |  awk '{print $1}' > urls.txt
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path . --write-db
+            echo "Generated $(find . -name "*.png" | wc -l) screenshots for GitHub domains"
+            cd ..
+          else
+            echo "File subdomain_results/httpx_output_github.txt not found"
+          fi
+      
+      # Process httpx_output_passive.txt
+      - name: Take screenshots - Passive Domains
+        run: |
+          if [ -f subdomain_results/httpx_output_passive.txt ]; then
+            mkdir -p screenshots_passive
+            cd screenshots_passive
+            cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" |  awk '{print $1}' > urls.txt
+            gowitness scan file -f urls.txt --threads 10 --screenshot-path . --write-db
+            echo "Generated $(find . -name "*.png" | wc -l) screenshots for passive domains"
+            cd ..
+          else
+            echo "File subdomain_results/httpx_output_passive.txt not found"
+          fi
+      
+      # Compress each screenshot directory separately including the SQLite database
+      - name: Compress screenshots with databases
+        run: |
+          # Compress each directory separately if it exists and has content
+          if [ -d screenshots_unique ] && [ "$(ls -A screenshots_unique)" ]; then
+            tar -czf screenshots_unique_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_unique/
+          fi
+          
+          if [ -d screenshots_github ] && [ "$(ls -A screenshots_github)" ]; then
+            tar -czf screenshots_github_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_github/
+          fi
+          
+          if [ -d screenshots_passive ] && [ "$(ls -A screenshots_passive)" ]; then
+            tar -czf screenshots_passive_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_passive/
+          fi
+      
+      # Upload all screenshot archives as artifacts
+      - name: Upload screenshot results
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: screenshots_*.tar.gz
+          retention-days: 7
