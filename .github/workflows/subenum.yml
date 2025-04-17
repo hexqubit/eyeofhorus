@@ -11,7 +11,6 @@ on:
 jobs:
   enumerate-subdomains:
     runs-on: ubuntu-latest
-    # Add explicit write permissions for contents
     permissions:
       contents: write
     
@@ -35,74 +34,46 @@ jobs:
           pipx install subcat
           echo "$(pipx environment --value PIPX_BIN_DIR)" >> $GITHUB_PATH
       
-      - name: Verify tools availability
-        run: |
-          echo "Checking binary availability:"
-          which subfinder || echo "subfinder not found"
-          which assetfinder || echo "assetfinder not found"
-          which findomain || echo "findomain not found"
-          which subcat || echo "subcat not found"
-      
       - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "Running enumeration against: ${{ env.TARGET_DOMAIN }}"
       
       - name: Create output directory
         run: mkdir -p subdomain_results
       
       - name: Run subcat
         run: |
-          echo "Running subcat..."
           subcat -silent -d ${{ env.TARGET_DOMAIN }} -o subdomain_results/subcat.txt || echo "Subcat failed"
     
       - name: Run Assetfinder
         run: |
-          echo "Running Assetfinder..."
           assetfinder --subs-only ${{ env.TARGET_DOMAIN }} | tee subdomain_results/assetfinder.txt || echo "Assetfinder failed"
 
       - name: Run Subfinder
         run: |
-          echo "Running Subfinder..."
           subfinder -d ${{ env.TARGET_DOMAIN }} -all -recursive -t 200 -silent -o subdomain_results/subfinder-rescursive.txt || echo "Subfinder failed"
           
       - name: Run Findomain
         run: |
-          echo "Running findomain..."
           findomain --quiet -t ${{ env.TARGET_DOMAIN }} | tee subdomain_results/findomain.txt || echo "Findomain failed"
     
       - name: Run GitHub Subdomains
         env:
           GITHUB_TOKEN: ${{ secrets.GH_SUBDOMAIN_TOKEN }}
         run: |
-          echo "Running github-subdomains..."
           github-subdomains -d ${{ env.TARGET_DOMAIN }} -t $GITHUB_TOKEN -o subdomain_results/github.txt || echo "GitHub subdomains failed"
       
       - name: Combine and sort results
         run: |
           cd subdomain_results
-          echo "File sizes:"
-          wc -l assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt github.txt || true
-    
-          # Create passive.txt with error handling
           sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > passive.txt
-    
-          # Remove original files
           rm assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt
-    
-          # Make grep more robust by handling empty results
+          
           if [ -s passive.txt ] && [ -s github.txt ]; then
-            # Both files exist and have content
             grep -Fxvi -f passive.txt github.txt > unique_domains.txt || touch unique_domains.txt
           else
-            # At least one file is empty, create empty result
             touch unique_domains.txt
-            echo "Warning: passive.txt or github.txt is empty"
           fi
-    
-          # Verify the results
-          echo "Final file sizes:"
-          wc -l passive.txt github.txt unique_domains.txt || true
       
       - name: http probe unique
         run: |
@@ -125,8 +96,7 @@ jobs:
       
       - name: Commit results
         run: |
-          # Use specified timestamp
-          timestamp="2025-04-17 04:49:42"
+          timestamp="2025-04-17 05:01:01"
           
           git config --global user.name "hexqubit"
           git config --global user.email "hexqubit@users.noreply.github.com"
@@ -159,9 +129,8 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-17 04:49:42" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250417_044942" >> $GITHUB_ENV
-          echo "CURRENT_USER=hexqubit" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-17 05:01:01" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250417_050101" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -174,107 +143,50 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chromium-browser xvfb
       
-      - name: Verify gowitness availability
-        run: |
-          which gowitness || echo "gowitness not found in PATH"
-          gowitness version
-          echo "User: ${{ env.CURRENT_USER }}, Timestamp: ${{ env.TIMESTAMP }}"
-      
-      # Process httpx_output_unique.txt
       - name: Take screenshots - Unique Domains
         run: |
           if [ -f subdomain_results/httpx_output_unique.txt ]; then
             mkdir -p screenshots_unique
             cd screenshots_unique
             cat ../subdomain_results/httpx_output_unique.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
-            
-            # Debug - print URLs being processed
-            echo "Processing $(wc -l < urls.txt) URLs from unique domains"
-            echo "Screenshot job started by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
-            
-            # Run gowitness with xvfb and chromium
             xvfb-run --server-args="-screen 0 1280x1024x24" gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
-            
-            # Debug - verify screenshots were created
-            find . -type f -name "*.png" | wc -l
-            du -sh ./screenshots || true
-            
-            echo "Generated $(find . -name "*.png" | wc -l) screenshots for unique domains"
             cd ..
-          else
-            echo "File subdomain_results/httpx_output_unique.txt not found"
           fi
       
-      # Process httpx_output_github.txt
       - name: Take screenshots - GitHub Domains
         run: |
           if [ -f subdomain_results/httpx_output_github.txt ]; then
             mkdir -p screenshots_github
             cd screenshots_github
             cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
-            
-            echo "Processing $(wc -l < urls.txt) URLs from GitHub domains"
-            echo "Screenshot job started by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
-            
-            # Run gowitness with xvfb and chromium
             xvfb-run --server-args="-screen 0 1280x1024x24" gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
-            
-            find . -type f -name "*.png" | wc -l
-            du -sh ./screenshots || true
-            
-            echo "Generated $(find . -name "*.png" | wc -l) screenshots for GitHub domains"
             cd ..
-          else
-            echo "File subdomain_results/httpx_output_github.txt not found"
           fi
       
-      # Process httpx_output_passive.txt
       - name: Take screenshots - Passive Domains
         run: |
           if [ -f subdomain_results/httpx_output_passive.txt ]; then
             mkdir -p screenshots_passive
             cd screenshots_passive
             cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
-            
-            echo "Processing $(wc -l < urls.txt) URLs from passive domains"
-            echo "Screenshot job started by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
-            
-            # Run gowitness with xvfb and chromium
             xvfb-run --server-args="-screen 0 1280x1024x24" gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db --chrome-path /usr/bin/chromium-browser
-            
-            find . -type f -name "*.png" | wc -l
-            du -sh ./screenshots || true
-            
-            echo "Generated $(find . -name "*.png" | wc -l) screenshots for passive domains"
             cd ..
-          else
-            echo "File subdomain_results/httpx_output_passive.txt not found"
           fi
       
-      # List all files before compressing
-      - name: Debug - List all files
-        run: |
-          echo "==== DIRECTORY STRUCTURE BEFORE COMPRESSION ===="
-          echo "Listing performed by ${{ env.CURRENT_USER }} at ${{ env.TIMESTAMP }}"
-          find screenshots_* -type f | sort
-      
-      # Compress each screenshot directory separately including the SQLite database
       - name: Compress screenshots with databases
         run: |
-          # Compress each directory separately if it exists and has content
           if [ -d screenshots_unique ] && [ "$(ls -A screenshots_unique)" ]; then
-            tar -czvf screenshots_unique_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_unique/
+            tar -czf screenshots_unique_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_unique/
           fi
           
           if [ -d screenshots_github ] && [ "$(ls -A screenshots_github)" ]; then
-            tar -czvf screenshots_github_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_github/
+            tar -czf screenshots_github_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_github/
           fi
           
           if [ -d screenshots_passive ] && [ "$(ls -A screenshots_passive)" ]; then
-            tar -czvf screenshots_passive_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_passive/
+            tar -czf screenshots_passive_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_passive/
           fi
       
-      # Upload all screenshot archives as artifacts
       - name: Upload screenshot results
         uses: actions/upload-artifact@v4
         with:
