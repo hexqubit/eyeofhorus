@@ -81,6 +81,7 @@ jobs:
       
       - name: Combine and sort results
         run: |
+          cd subdomain_results
           echo "File sizes:"
           wc -l assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt github.txt || true
     
