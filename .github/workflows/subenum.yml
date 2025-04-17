@@ -55,7 +55,7 @@ jobs:
       - name: Run subcat
         run: |
           echo "Running subcat..."
-          subcat -d ${{ env.TARGET_DOMAIN }} -o subdomain_results/subcat.txt || echo "Subcat failed"
+          subcat -silent -d ${{ env.TARGET_DOMAIN }} -o subdomain_results/subcat.txt || echo "Subcat failed"
     
       - name: Run Assetfinder
         run: |
