@@ -173,23 +173,10 @@ jobs:
             cd ..
           fi
       
-      - name: Compress screenshots with databases
-        run: |
-          if [ -d screenshots_unique ] && [ "$(ls -A screenshots_unique)" ]; then
-            tar -czf screenshots_unique_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_unique/
-          fi
-          
-          if [ -d screenshots_github ] && [ "$(ls -A screenshots_github)" ]; then
-            tar -czf screenshots_github_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_github/
-          fi
-          
-          if [ -d screenshots_passive ] && [ "$(ls -A screenshots_passive)" ]; then
-            tar -czf screenshots_passive_${{ env.TARGET_DOMAIN }}_${{ env.FILENAME_TIMESTAMP }}.tar.gz screenshots_passive/
-          fi
       
       - name: Upload screenshot results
         uses: actions/upload-artifact@v4
         with:
           name: screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: screenshots_*.tar.gz
+          path: screenshots_*/
           retention-days: 7
