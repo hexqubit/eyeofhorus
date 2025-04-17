@@ -1,0 +1,13 @@
+au.intercomassets.com
+billing-admin.intercomassets.com
+blog-staging.intercomassets.com
+blog.intercomassets.com
+developer-home.intercomassets.com
+gtm.intercomassets.com
+intercomassets.com
+marketing.intercomassets.com
+mycampus.intercomassets.com
+sexshop.intercomassets.com
+static.au.intercomassets.com
+static.intercomassets.com
+store.intercomassets.com
