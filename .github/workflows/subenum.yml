@@ -172,7 +172,7 @@ jobs:
       - name: Verify gowitness availability
         run: |
           which gowitness || echo "gowitness not found in PATH"
-          gowitness --version
+          gowitness version
       
       # Process httpx_output_unique.txt
       - name: Take screenshots - Unique Domains
