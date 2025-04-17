@@ -96,7 +96,7 @@ jobs:
       
       - name: Commit results
         run: |
-          timestamp="2025-04-17 05:01:01"
+          timestamp="2025-04-17 11:21:32"
           
           git config --global user.name "hexqubit"
           git config --global user.email "hexqubit@users.noreply.github.com"
@@ -129,8 +129,8 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-17 05:01:01" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250417_050101" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-17 11:21:32" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250417_112132" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -153,6 +153,16 @@ jobs:
             cd ..
           fi
       
+      - name: Upload unique screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: unique-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: screenshots_unique/
+          retention-days: 7
+      
+      - name: Clean unique screenshots
+        run: rm -rf screenshots_unique
+      
       - name: Take screenshots - GitHub Domains
         run: |
           if [ -f subdomain_results/httpx_output_github.txt ]; then
@@ -162,6 +172,16 @@ jobs:
             gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
+      
+      - name: Upload github screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: screenshots_github/
+          retention-days: 7
+      
+      - name: Clean github screenshots
+        run: rm -rf screenshots_github
       
       - name: Take screenshots - Passive Domains
         run: |
@@ -173,9 +193,9 @@ jobs:
             cd ..
           fi
       
-      - name: Upload screenshot results
+      - name: Upload passive screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: screenshots_*/
+          name: passive-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: screenshots_passive/
           retention-days: 7
