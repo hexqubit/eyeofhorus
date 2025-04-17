@@ -82,6 +82,7 @@ jobs:
       - name: Combine and sort results
         run: |
           cd subdomain_results
+          ls
           sort -u assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt > passive.txt
           rm assetfinder.txt findomain.txt subcat.txt subfinder-rescursive.txt
           grep -Fxvi -f passive.txt github.txt > unique_domains.txt
