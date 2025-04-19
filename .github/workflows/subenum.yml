@@ -113,7 +113,8 @@ jobs:
             git push
           fi
 
-  screenshot-subdomains:
+  # Split into three parallel screenshot jobs
+  screenshot-unique-domains:
     needs: enumerate-subdomains
     runs-on: ubuntu-latest
     
@@ -159,9 +160,36 @@ jobs:
           name: unique-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: screenshots_unique/
           retention-days: 7
+
+  screenshot-github-domains:
+    needs: enumerate-subdomains
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Clean unique screenshots
-        run: rm -rf screenshots_unique
+      - name: Set target domain and timestamp
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-17 11:21:32" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250417_112132" >> $GITHUB_ENV
+      
+      - name: Download subdomain results
+        uses: actions/download-artifact@v4
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results
+      
+      - name: Install Chromium for screenshots
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser xvfb
       
       - name: Take screenshots - GitHub Domains
         run: |
@@ -179,9 +207,36 @@ jobs:
           name: github-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: screenshots_github/
           retention-days: 7
+
+  screenshot-passive-domains:
+    needs: enumerate-subdomains
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Clean github screenshots
-        run: rm -rf screenshots_github
+      - name: Set target domain and timestamp
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-17 11:21:32" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250417_112132" >> $GITHUB_ENV
+      
+      - name: Download subdomain results
+        uses: actions/download-artifact@v4
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results
+      
+      - name: Install Chromium for screenshots
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser xvfb
       
       - name: Take screenshots - Passive Domains
         run: |
@@ -198,4 +253,35 @@ jobs:
         with:
           name: passive-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: screenshots_passive/
+          retention-days: 7
+
+  # Optional: Add a final job to collect all screenshots (if needed)
+  collect-results:
+    needs: [screenshot-unique-domains, screenshot-github-domains, screenshot-passive-domains]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set target domain
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+      
+      - name: Download all screenshot artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all_screenshots
+          pattern: '*-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}'
+      
+      - name: Create combined screenshots archive
+        run: |
+          mkdir -p combined_screenshots
+          cp -r all_screenshots/*/* combined_screenshots/
+      
+      - name: Upload combined screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: combined_screenshots/
           retention-days: 7
