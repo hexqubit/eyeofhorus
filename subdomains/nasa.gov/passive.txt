@@ -2408,6 +2408,7 @@ emissivity.jpl.nasa.gov
 employeeorientation.nasa.gov
 ems.eos.nasa.gov
 ems.gsfc.nasa.gov
+ems.jsc.nasa.gov
 emweb2.ndc.nasa.gov
 engineering.arc.nasa.gov
 enplvpn.eos.nasa.gov
@@ -3880,6 +3881,7 @@ jsc-mod-wrkflow.jsc.nasa.gov
 jsc-nasacares.ksc.nasa.gov
 jsc-test.jsc.nasa.gov
 jsc-vpn.jsc.nasa.gov
+jsc.nasa.gov
 jscasc-01.ndc.nasa.gov
 jsccdsp-cis01.ndc.nasa.gov
 jsccdsp-web02.ndc.nasa.gov
@@ -4005,6 +4007,7 @@ ks8600svrprsql1.ndc.nasa.gov
 ks8600svrvalsp1.ndc.nasa.gov
 ksc-nasacares.jsc.nasa.gov
 ksc-vpn-1.ksc.nasa.gov
+ksc.nasa.gov
 ksccb01.ndc.nasa.gov
 ksciscav01.ndc.nasa.gov
 kscisccl01.ndc.nasa.gov
@@ -6774,6 +6777,8 @@ polargateways2008.gsfc.nasa.gov
 pollux.hq.nasa.gov
 polycom17-211.ndc.nasa.gov
 pop1.vafb.nasa.gov
+pop500.gsfc.nasa.gov
+pop700.gsfc.nasa.gov
 porrima.sef.hq.nasa.gov
 portal.boeing.ksc.nasa.gov
 portal.ksc.nasa.gov
@@ -6893,6 +6898,7 @@ rasprotoicap.jsc.nasa.gov
 rasprotoman.jsc.nasa.gov
 rastaban.hq.nasa.gov
 rats.jpl.nasa.gov
+rattler.eos.nasa.gov
 raulgap.mdscc.nasa.gov
 rbalciun@ems.jsc.nasa.gov
 rbc6px82ugfxbf.intsvc.cloud.uat.earthdata.nasa.gov
