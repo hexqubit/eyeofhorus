@@ -1,0 +1,5 @@
+https://siasindia.org [SUCCESS] [200] [] [33003] [SAFI Institute of Advanced Study (Autonomous) | Autonomous Arts and Science College with Naac A++ grade in        kerala] [Bootstrap,Cloudflare,Google Analytics,HTTP/3,Slick,Vue.js,YouTube,jQuery]
+http://siasindia.org [SUCCESS] [200] [] [33003] [SAFI Institute of Advanced Study (Autonomous) | Autonomous Arts and Science College with Naac A++ grade in        kerala] [Bootstrap,Cloudflare,Google Analytics,HTTP/3,Slick,Vue.js,YouTube,jQuery]
+http://siasindia.org:8000 [FAILED]
+http://siasindia.org:8443 [SUCCESS] [400] [] [253] [400 The plain HTTP request was sent to HTTPS port] [Cloudflare]
+http://siasindia.org:8080 [FAILED]
