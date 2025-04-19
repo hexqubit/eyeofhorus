@@ -1,1 +1,13 @@
 siasindia.org
+alumni.siasindia.org
+cpanel.siasindia.org
+ftp.siasindia.org
+m.siasindia.org
+magazine.siasindia.org
+mail.siasindia.org
+webdisk.siasindia.org
+webmail.siasindia.org
+www.alumni.siasindia.org
+www.m.siasindia.org
+www.magazine.siasindia.org
+www.siasindia.org
