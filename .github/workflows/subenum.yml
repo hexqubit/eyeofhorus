@@ -6,7 +6,7 @@ on:
       domain:
         description: 'Target domain to scan'
         required: true
-        default: 'siasindia.org'
+        default: 'siasindia.com'
 
 jobs:
   enumerate-subdomains:
@@ -84,10 +84,10 @@ jobs:
       
       - name: Commit enumeration results
         run: |
-          timestamp="2025-04-19 10:55:55"
+          timestamp="2025-04-19 11:03:05"
           
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
+          git config --global user.name "hexqubittwo"
+          git config --global user.email "hexqubittwo@users.noreply.github.com"
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp -r subdomain_results/* subdomains/${{ env.TARGET_DOMAIN }}/
@@ -98,8 +98,7 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Subdomain enumeration results for ${{ env.TARGET_DOMAIN }} - $timestamp"
-            git pull --rebase origin main
-            git push
+            git push || (git pull && git push)
           fi
 
   # Parallel HTTP probe jobs
@@ -121,7 +120,7 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 10:55:55" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -135,8 +134,11 @@ jobs:
       
       - name: Commit probe results with retry
         run: |
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
+          git config --global user.name "hexqubittwo"
+          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          
+          # First pull the latest changes to avoid conflicts
+          git pull origin main
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_unique.txt subdomains/${{ env.TARGET_DOMAIN }}/
@@ -155,9 +157,6 @@ jobs:
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt to commit and push changes..."
             
-            # Pull latest changes with rebase to avoid merge commits
-            git pull --rebase origin main
-            
             # Commit changes
             git commit -m "HTTP probe results (unique) for ${{ env.TARGET_DOMAIN }} - ${{ env.TIMESTAMP }} [attempt $attempt]"
             
@@ -172,6 +171,9 @@ jobs:
                 echo "Failed to push after $max_attempts attempts"
                 exit 1
               fi
+              
+              # Pull changes without rebase (merge instead)
+              git pull origin main
               
               # Wait with exponential backoff before retrying
               sleep_time=$(( 2 ** $attempt ))
@@ -207,7 +209,7 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 10:55:55" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -221,8 +223,11 @@ jobs:
       
       - name: Commit probe results with retry
         run: |
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
+          git config --global user.name "hexqubittwo"
+          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          
+          # First pull the latest changes to avoid conflicts
+          git pull origin main
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_github.txt subdomains/${{ env.TARGET_DOMAIN }}/
@@ -241,9 +246,6 @@ jobs:
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt to commit and push changes..."
             
-            # Pull latest changes with rebase to avoid merge commits
-            git pull --rebase origin main
-            
             # Commit changes
             git commit -m "HTTP probe results (github) for ${{ env.TARGET_DOMAIN }} - ${{ env.TIMESTAMP }} [attempt $attempt]"
             
@@ -258,6 +260,9 @@ jobs:
                 echo "Failed to push after $max_attempts attempts"
                 exit 1
               fi
+              
+              # Pull changes without rebase (merge instead)
+              git pull origin main
               
               # Wait with exponential backoff before retrying
               sleep_time=$(( 2 ** $attempt ))
@@ -293,7 +298,7 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 10:55:55" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -307,8 +312,11 @@ jobs:
       
       - name: Commit probe results with retry
         run: |
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
+          git config --global user.name "hexqubittwo"
+          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          
+          # First pull the latest changes to avoid conflicts
+          git pull origin main
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_passive.txt subdomains/${{ env.TARGET_DOMAIN }}/
@@ -327,9 +335,6 @@ jobs:
           while [ $attempt -le $max_attempts ]; do
             echo "Attempt $attempt to commit and push changes..."
             
-            # Pull latest changes with rebase to avoid merge commits
-            git pull --rebase origin main
-            
             # Commit changes
             git commit -m "HTTP probe results (passive) for ${{ env.TARGET_DOMAIN }} - ${{ env.TIMESTAMP }} [attempt $attempt]"
             
@@ -344,6 +349,9 @@ jobs:
                 echo "Failed to push after $max_attempts attempts"
                 exit 1
               fi
+              
+              # Pull changes without rebase (merge instead)
+              git pull origin main
               
               # Wait with exponential backoff before retrying
               sleep_time=$(( 2 ** $attempt ))
@@ -378,8 +386,8 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 10:55:55" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250419_105555" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250419_110305" >> $GITHUB_ENV
       
       - name: Download httpx results
         uses: actions/download-artifact@v4
@@ -425,8 +433,8 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 10:55:55" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250419_105555" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250419_110305" >> $GITHUB_ENV
       
       - name: Download httpx results
         uses: actions/download-artifact@v4
@@ -472,8 +480,8 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 10:55:55" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250419_105555" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250419_110305" >> $GITHUB_ENV
       
       - name: Download httpx results
         uses: actions/download-artifact@v4
