@@ -82,13 +82,15 @@ jobs:
           path: subdomain_results/
           retention-days: 7
       
+      - name: Configure Git
+        run: |
+          git config --global user.name "hexqubitone"
+          git config --global user.email "hexqubitone@users.noreply.github.com"
+          # Set merge strategy to avoid divergent branch errors
+          git config --global pull.rebase false
+      
       - name: Commit enumeration results
         run: |
-          timestamp="2025-04-19 11:19:15"
-          
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
-          
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp -r subdomain_results/* subdomains/${{ env.TARGET_DOMAIN }}/
           
@@ -97,8 +99,13 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Subdomain enumeration results for ${{ env.TARGET_DOMAIN }} - $timestamp"
-            git push || (git pull && git push)
+            git commit -m "Subdomain enumeration results for ${{ env.TARGET_DOMAIN }} - 2025-04-19 11:25:31"
+            
+            # Try to push, if fails pull and try again
+            if ! git push; then
+              git pull --no-rebase
+              git push
+            fi
           fi
 
   # Parallel HTTP probe jobs
@@ -127,17 +134,19 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
+      - name: Configure Git
+        run: |
+          git config --global user.name "hexqubitone"
+          git config --global user.email "hexqubitone@users.noreply.github.com"
+          # Set merge strategy to avoid divergent branch errors
+          git config --global pull.rebase false
+      
       - name: HTTP probe unique domains
         run: |
           httpx -l subdomain_results/unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_unique.txt
       
       - name: Commit probe results
         run: |
-          timestamp="2025-04-19 11:19:15"
-          
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
-          
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_unique.txt subdomains/${{ env.TARGET_DOMAIN }}/
           
@@ -146,8 +155,13 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "HTTP probe results (unique) for ${{ env.TARGET_DOMAIN }} - $timestamp"
-            git push || (git pull && git push)
+            git commit -m "HTTP probe results (unique) for ${{ env.TARGET_DOMAIN }} - 2025-04-19 11:25:31"
+            
+            # Try to push, if fails pull and try again
+            if ! git push; then
+              git pull --no-rebase
+              git push
+            fi
           fi
 
   probe-github-domains:
@@ -175,17 +189,19 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
+      - name: Configure Git
+        run: |
+          git config --global user.name "hexqubitone"
+          git config --global user.email "hexqubitone@users.noreply.github.com"
+          # Set merge strategy to avoid divergent branch errors
+          git config --global pull.rebase false
+      
       - name: HTTP probe github domains
         run: |
           httpx -l subdomain_results/github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_github.txt
       
       - name: Commit probe results
         run: |
-          timestamp="2025-04-19 11:19:15"
-          
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
-          
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_github.txt subdomains/${{ env.TARGET_DOMAIN }}/
           
@@ -194,8 +210,13 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "HTTP probe results (github) for ${{ env.TARGET_DOMAIN }} - $timestamp"
-            git push || (git pull && git push)
+            git commit -m "HTTP probe results (github) for ${{ env.TARGET_DOMAIN }} - 2025-04-19 11:25:31"
+            
+            # Try to push, if fails pull and try again
+            if ! git push; then
+              git pull --no-rebase
+              git push
+            fi
           fi
 
   probe-passive-domains:
@@ -223,17 +244,19 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
+      - name: Configure Git
+        run: |
+          git config --global user.name "hexqubitone"
+          git config --global user.email "hexqubitone@users.noreply.github.com"
+          # Set merge strategy to avoid divergent branch errors
+          git config --global pull.rebase false
+      
       - name: HTTP probe passive domains
         run: |
           httpx -l subdomain_results/passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_passive.txt
       
       - name: Commit probe results
         run: |
-          timestamp="2025-04-19 11:19:15"
-          
-          git config --global user.name "hexqubit"
-          git config --global user.email "hexqubit@users.noreply.github.com"
-          
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_passive.txt subdomains/${{ env.TARGET_DOMAIN }}/
           
@@ -242,8 +265,13 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "HTTP probe results (passive) for ${{ env.TARGET_DOMAIN }} - $timestamp"
-            git push || (git pull && git push)
+            git commit -m "HTTP probe results (passive) for ${{ env.TARGET_DOMAIN }} - 2025-04-19 11:25:31"
+            
+            # Try to push, if fails pull and try again
+            if ! git push; then
+              git pull --no-rebase
+              git push
+            fi
           fi
 
   # Parallel screenshot jobs
