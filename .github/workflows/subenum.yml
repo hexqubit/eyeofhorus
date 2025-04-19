@@ -84,10 +84,10 @@ jobs:
       
       - name: Commit enumeration results
         run: |
-          timestamp="2025-04-19 11:03:05"
+          timestamp="2025-04-19 11:19:15"
           
-          git config --global user.name "hexqubittwo"
-          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          git config --global user.name "hexqubit"
+          git config --global user.email "hexqubit@users.noreply.github.com"
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp -r subdomain_results/* subdomains/${{ env.TARGET_DOMAIN }}/
@@ -117,10 +117,9 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
           chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Set target domain and timestamp
+      - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -128,17 +127,16 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
-      - name: http probe unique domains
+      - name: HTTP probe unique domains
         run: |
           httpx -l subdomain_results/unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_unique.txt
       
-      - name: Commit probe results with retry
+      - name: Commit probe results
         run: |
-          git config --global user.name "hexqubittwo"
-          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          timestamp="2025-04-19 11:19:15"
           
-          # First pull the latest changes to avoid conflicts
-          git pull origin main
+          git config --global user.name "hexqubit"
+          git config --global user.email "hexqubit@users.noreply.github.com"
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_unique.txt subdomains/${{ env.TARGET_DOMAIN }}/
@@ -147,49 +145,10 @@ jobs:
           
           if git diff --staged --quiet; then
             echo "No changes to commit"
-            exit 0
+          else
+            git commit -m "HTTP probe results (unique) for ${{ env.TARGET_DOMAIN }} - $timestamp"
+            git push || (git pull && git push)
           fi
-          
-          # Retry loop for Git operations
-          max_attempts=5
-          attempt=1
-          
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt to commit and push changes..."
-            
-            # Commit changes
-            git commit -m "HTTP probe results (unique) for ${{ env.TARGET_DOMAIN }} - ${{ env.TIMESTAMP }} [attempt $attempt]"
-            
-            # Try to push
-            if git push; then
-              echo "Successfully pushed changes!"
-              break
-            else
-              echo "Push failed on attempt $attempt"
-              
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to push after $max_attempts attempts"
-                exit 1
-              fi
-              
-              # Pull changes without rebase (merge instead)
-              git pull origin main
-              
-              # Wait with exponential backoff before retrying
-              sleep_time=$(( 2 ** $attempt ))
-              echo "Waiting for $sleep_time seconds before retrying..."
-              sleep $sleep_time
-              
-              attempt=$(( attempt + 1 ))
-            fi
-          done
-      
-      - name: Upload results for screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: httpx-unique-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: subdomain_results/httpx_output_unique.txt
-          retention-days: 7
 
   probe-github-domains:
     needs: enumerate-subdomains
@@ -206,10 +165,9 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
           chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Set target domain and timestamp
+      - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -217,17 +175,16 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
-      - name: http probe github domains
+      - name: HTTP probe github domains
         run: |
           httpx -l subdomain_results/github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_github.txt
       
-      - name: Commit probe results with retry
+      - name: Commit probe results
         run: |
-          git config --global user.name "hexqubittwo"
-          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          timestamp="2025-04-19 11:19:15"
           
-          # First pull the latest changes to avoid conflicts
-          git pull origin main
+          git config --global user.name "hexqubit"
+          git config --global user.email "hexqubit@users.noreply.github.com"
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_github.txt subdomains/${{ env.TARGET_DOMAIN }}/
@@ -236,49 +193,10 @@ jobs:
           
           if git diff --staged --quiet; then
             echo "No changes to commit"
-            exit 0
+          else
+            git commit -m "HTTP probe results (github) for ${{ env.TARGET_DOMAIN }} - $timestamp"
+            git push || (git pull && git push)
           fi
-          
-          # Retry loop for Git operations
-          max_attempts=5
-          attempt=1
-          
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt to commit and push changes..."
-            
-            # Commit changes
-            git commit -m "HTTP probe results (github) for ${{ env.TARGET_DOMAIN }} - ${{ env.TIMESTAMP }} [attempt $attempt]"
-            
-            # Try to push
-            if git push; then
-              echo "Successfully pushed changes!"
-              break
-            else
-              echo "Push failed on attempt $attempt"
-              
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to push after $max_attempts attempts"
-                exit 1
-              fi
-              
-              # Pull changes without rebase (merge instead)
-              git pull origin main
-              
-              # Wait with exponential backoff before retrying
-              sleep_time=$(( 2 ** $attempt ))
-              echo "Waiting for $sleep_time seconds before retrying..."
-              sleep $sleep_time
-              
-              attempt=$(( attempt + 1 ))
-            fi
-          done
-      
-      - name: Upload results for screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: httpx-github-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: subdomain_results/httpx_output_github.txt
-          retention-days: 7
 
   probe-passive-domains:
     needs: enumerate-subdomains
@@ -295,10 +213,9 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
           chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Set target domain and timestamp
+      - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
       
       - name: Download subdomain results
         uses: actions/download-artifact@v4
@@ -306,17 +223,16 @@ jobs:
           name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
-      - name: http probe passive domains
+      - name: HTTP probe passive domains
         run: |
           httpx -l subdomain_results/passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_passive.txt
       
-      - name: Commit probe results with retry
+      - name: Commit probe results
         run: |
-          git config --global user.name "hexqubittwo"
-          git config --global user.email "hexqubittwo@users.noreply.github.com"
+          timestamp="2025-04-19 11:19:15"
           
-          # First pull the latest changes to avoid conflicts
-          git pull origin main
+          git config --global user.name "hexqubit"
+          git config --global user.email "hexqubit@users.noreply.github.com"
           
           mkdir -p subdomains/${{ env.TARGET_DOMAIN }}
           cp subdomain_results/httpx_output_passive.txt subdomains/${{ env.TARGET_DOMAIN }}/
@@ -325,51 +241,12 @@ jobs:
           
           if git diff --staged --quiet; then
             echo "No changes to commit"
-            exit 0
+          else
+            git commit -m "HTTP probe results (passive) for ${{ env.TARGET_DOMAIN }} - $timestamp"
+            git push || (git pull && git push)
           fi
-          
-          # Retry loop for Git operations
-          max_attempts=5
-          attempt=1
-          
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt to commit and push changes..."
-            
-            # Commit changes
-            git commit -m "HTTP probe results (passive) for ${{ env.TARGET_DOMAIN }} - ${{ env.TIMESTAMP }} [attempt $attempt]"
-            
-            # Try to push
-            if git push; then
-              echo "Successfully pushed changes!"
-              break
-            else
-              echo "Push failed on attempt $attempt"
-              
-              if [ $attempt -eq $max_attempts ]; then
-                echo "Failed to push after $max_attempts attempts"
-                exit 1
-              fi
-              
-              # Pull changes without rebase (merge instead)
-              git pull origin main
-              
-              # Wait with exponential backoff before retrying
-              sleep_time=$(( 2 ** $attempt ))
-              echo "Waiting for $sleep_time seconds before retrying..."
-              sleep $sleep_time
-              
-              attempt=$(( attempt + 1 ))
-            fi
-          done
-      
-      - name: Upload results for screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: httpx-passive-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: subdomain_results/httpx_output_passive.txt
-          retention-days: 7
 
-  # Parallel screenshot jobs that depend on their respective probe jobs
+  # Parallel screenshot jobs
   screenshot-unique-domains:
     needs: probe-unique-domains
     runs-on: ubuntu-latest
@@ -383,17 +260,14 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
           chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Set target domain and timestamp
+      - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250419_110305" >> $GITHUB_ENV
       
-      - name: Download httpx results
-        uses: actions/download-artifact@v4
-        with:
-          name: httpx-unique-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: subdomain_results
+      - name: Get httpx results from repository
+        run: |
+          mkdir -p subdomain_results
+          cp subdomains/${{ env.TARGET_DOMAIN }}/httpx_output_unique.txt subdomain_results/ || echo "File not found, will be created later"
       
       - name: Install Chromium for screenshots
         run: |
@@ -405,7 +279,7 @@ jobs:
           if [ -f subdomain_results/httpx_output_unique.txt ]; then
             mkdir -p screenshots_unique
             cd screenshots_unique
-            cat ../subdomain_results/httpx_output_unique.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
+            cat ../subdomain_results/httpx_output_unique.txt | grep "\[SUCCESS\] \[200\]" | awk '{print $1}' > urls.txt
             gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
@@ -430,17 +304,14 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
           chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Set target domain and timestamp
+      - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250419_110305" >> $GITHUB_ENV
       
-      - name: Download httpx results
-        uses: actions/download-artifact@v4
-        with:
-          name: httpx-github-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: subdomain_results
+      - name: Get httpx results from repository
+        run: |
+          mkdir -p subdomain_results
+          cp subdomains/${{ env.TARGET_DOMAIN }}/httpx_output_github.txt subdomain_results/ || echo "File not found, will be created later"
       
       - name: Install Chromium for screenshots
         run: |
@@ -452,7 +323,7 @@ jobs:
           if [ -f subdomain_results/httpx_output_github.txt ]; then
             mkdir -p screenshots_github
             cd screenshots_github
-            cat ../subdomain_results/httpx_output_github.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
+            cat ../subdomain_results/httpx_output_github.txt | grep "\[SUCCESS\] \[200\]" | awk '{print $1}' > urls.txt
             gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
@@ -477,17 +348,14 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
           chmod -R +x $GITHUB_WORKSPACE/bin
       
-      - name: Set target domain and timestamp
+      - name: Set target domain
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-19 11:03:05" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250419_110305" >> $GITHUB_ENV
       
-      - name: Download httpx results
-        uses: actions/download-artifact@v4
-        with:
-          name: httpx-passive-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: subdomain_results
+      - name: Get httpx results from repository
+        run: |
+          mkdir -p subdomain_results
+          cp subdomains/${{ env.TARGET_DOMAIN }}/httpx_output_passive.txt subdomain_results/ || echo "File not found, will be created later"
       
       - name: Install Chromium for screenshots
         run: |
@@ -499,7 +367,7 @@ jobs:
           if [ -f subdomain_results/httpx_output_passive.txt ]; then
             mkdir -p screenshots_passive
             cd screenshots_passive
-            cat ../subdomain_results/httpx_output_passive.txt | grep -v "FAILED" | awk '{print $1}' > urls.txt
+            cat ../subdomain_results/httpx_output_passive.txt | grep "\[SUCCESS\] \[200\]" | awk '{print $1}' > urls.txt
             gowitness scan file -f urls.txt --threads 10 --screenshot-path ./screenshots --write-db
             cd ..
           fi
