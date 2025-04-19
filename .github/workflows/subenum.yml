@@ -74,18 +74,6 @@ jobs:
           else
             touch unique_domains.txt
           fi
-      
-      - name: http probe unique
-        run: |
-          httpx -l subdomain_results/unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_unique.txt
-          
-      - name: http probe github
-        run: |
-          httpx -l subdomain_results/github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_github.txt
-   
-      - name: http probe passive
-        run: |
-          httpx -l subdomain_results/passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_passive.txt
     
       - name: Upload results as artifacts
         uses: actions/upload-artifact@v4
@@ -96,7 +84,7 @@ jobs:
       
       - name: Commit results
         run: |
-          timestamp="2025-04-17 11:21:32"
+          timestamp="2025-04-19 10:47:07"
           
           git config --global user.name "hexqubit"
           git config --global user.email "hexqubit@users.noreply.github.com"
@@ -113,9 +101,112 @@ jobs:
             git push
           fi
 
-  # Split into three parallel screenshot jobs
-  screenshot-unique-domains:
+  # Parallel HTTP probe jobs
+  probe-unique-domains:
     needs: enumerate-subdomains
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
+      
+      - name: Set target domain
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+      
+      - name: Download subdomain results
+        uses: actions/download-artifact@v4
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results
+      
+      - name: http probe unique domains
+        run: |
+          httpx -l subdomain_results/unique_domains.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_unique.txt
+      
+      - name: Upload probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: httpx-unique-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results/httpx_output_unique.txt
+          retention-days: 7
+
+  probe-github-domains:
+    needs: enumerate-subdomains
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
+      
+      - name: Set target domain
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+      
+      - name: Download subdomain results
+        uses: actions/download-artifact@v4
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results
+      
+      - name: http probe github domains
+        run: |
+          httpx -l subdomain_results/github.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_github.txt
+      
+      - name: Upload probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: httpx-github-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results/httpx_output_github.txt
+          retention-days: 7
+
+  probe-passive-domains:
+    needs: enumerate-subdomains
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add bin directory to PATH
+        run: |
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          chmod -R +x $GITHUB_WORKSPACE/bin
+      
+      - name: Set target domain
+        run: |
+          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
+      
+      - name: Download subdomain results
+        uses: actions/download-artifact@v4
+        with:
+          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results
+      
+      - name: http probe passive domains
+        run: |
+          httpx -l subdomain_results/passive.txt -title -sc -silent -no-color -location -p 80,443,8000,8080,8443 -td -cl -probe -o subdomain_results/httpx_output_passive.txt
+      
+      - name: Upload probe results
+        uses: actions/upload-artifact@v4
+        with:
+          name: httpx-passive-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          path: subdomain_results/httpx_output_passive.txt
+          retention-days: 7
+
+  # Parallel screenshot jobs that depend on their respective probe jobs
+  screenshot-unique-domains:
+    needs: probe-unique-domains
     runs-on: ubuntu-latest
     
     steps:
@@ -130,13 +221,13 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-17 11:21:32" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250417_112132" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 10:47:07" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250419_104707" >> $GITHUB_ENV
       
-      - name: Download subdomain results
+      - name: Download httpx results
         uses: actions/download-artifact@v4
         with:
-          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          name: httpx-unique-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
       - name: Install Chromium for screenshots
@@ -162,7 +253,7 @@ jobs:
           retention-days: 7
 
   screenshot-github-domains:
-    needs: enumerate-subdomains
+    needs: probe-github-domains
     runs-on: ubuntu-latest
     
     steps:
@@ -177,13 +268,13 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-17 11:21:32" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250417_112132" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 10:47:07" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250419_104707" >> $GITHUB_ENV
       
-      - name: Download subdomain results
+      - name: Download httpx results
         uses: actions/download-artifact@v4
         with:
-          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          name: httpx-github-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
       - name: Install Chromium for screenshots
@@ -209,7 +300,7 @@ jobs:
           retention-days: 7
 
   screenshot-passive-domains:
-    needs: enumerate-subdomains
+    needs: probe-passive-domains
     runs-on: ubuntu-latest
     
     steps:
@@ -224,13 +315,13 @@ jobs:
       - name: Set target domain and timestamp
         run: |
           echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-          echo "TIMESTAMP=2025-04-17 11:21:32" >> $GITHUB_ENV
-          echo "FILENAME_TIMESTAMP=20250417_112132" >> $GITHUB_ENV
+          echo "TIMESTAMP=2025-04-19 10:47:07" >> $GITHUB_ENV
+          echo "FILENAME_TIMESTAMP=20250419_104707" >> $GITHUB_ENV
       
-      - name: Download subdomain results
+      - name: Download httpx results
         uses: actions/download-artifact@v4
         with:
-          name: subdomain-enum-results-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
+          name: httpx-passive-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: subdomain_results
       
       - name: Install Chromium for screenshots
@@ -253,35 +344,4 @@ jobs:
         with:
           name: passive-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
           path: screenshots_passive/
-          retention-days: 7
-
-  # Optional: Add a final job to collect all screenshots (if needed)
-  collect-results:
-    needs: [screenshot-unique-domains, screenshot-github-domains, screenshot-passive-domains]
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Set target domain
-        run: |
-          echo "TARGET_DOMAIN=${{ github.event.inputs.domain }}" >> $GITHUB_ENV
-      
-      - name: Download all screenshot artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: all_screenshots
-          pattern: '*-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}'
-      
-      - name: Create combined screenshots archive
-        run: |
-          mkdir -p combined_screenshots
-          cp -r all_screenshots/*/* combined_screenshots/
-      
-      - name: Upload combined screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: combined-screenshots-${{ env.TARGET_DOMAIN }}-${{ github.run_id }}
-          path: combined_screenshots/
           retention-days: 7
